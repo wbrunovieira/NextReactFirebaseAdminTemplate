@@ -7,8 +7,12 @@ import route from 'next/router'
 
 interface AuthContextProps {
     usuario?: Usuario
+    carregando?: boolean
     loginGoogle?: () => Promise<void>
+    login?: (email:string, senha:string) => Promise<void>
+    cadastrar?: (email:string, senha:string) => Promise<void>
     logout?: () => Promise<void>
+    
 }
 
 const AuthContext = createContext<AuthContextProps>({})
@@ -57,6 +61,33 @@ export function AuthProvider(props) {
         }
     }
 
+    async function login(email, senha) {
+        try {
+            setCarregando(true)
+            const resp = await firebase.auth()
+                .signInWithEmailAndPassword(email, senha)
+    
+            await configurarSessao(resp.user)
+            route.push('/')
+        } finally {
+            setCarregando(false)
+        }
+    }
+
+
+    async function cadastrar(email, senha) {
+        try {
+            setCarregando(true)
+            const resp = await firebase.auth()
+                .createUserWithEmailAndPassword(email, senha)
+    
+            await configurarSessao(resp.user)
+            route.push('/')
+        } finally {
+            setCarregando(false)
+        }
+    }
+
     async function loginGoogle(){
         
         try {
@@ -96,7 +127,11 @@ export function AuthProvider(props) {
         <AuthContext.Provider value={{
             loginGoogle,
             logout,
-            usuario
+            login,
+            cadastrar,
+            usuario,
+            carregando
+            
         }}>
             {props.children}
         </AuthContext.Provider>
